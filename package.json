@@ -9,6 +9,7 @@
   "author": "github.com/suniltheta",
   "license": "ISC",
   "dependencies": {
+    "aws-sdk": "^2.45.0",
     "botkit": "^0.2.2",
     "forecast.io": "0.0.9",
     "google-auth-library": "^0.9.9",
