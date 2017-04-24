@@ -56,7 +56,7 @@ var controller = Botkit.slackbot({
 
 // connect the bot to a stream of messages
 controller.spawn({
-    token: process.env.ALTCODETOKEN,
+    token: process.env.ALTCODETOKEN
     //slack bot token here
 }).startRTM()
 
@@ -80,7 +80,7 @@ controller.hears('','direct_message, direct_mention, mention',function(bot, mess
     else if(message.text=="HELP"||message.text=="help"||message.text=="Help")
     {
         bot.reply(message, "Use '@slackmonkey Hi' / '@slackmonkey hello' to test if the monkey is awake  :monkey_face: ");
-        bot.reply(message, "Use '@slackmonkey aws' / '@slackmonkey AWS' to see your active instances :monkey_face: ");
+        bot.reply(message, "Use '@slackmonkey aws' / '@slackmonkey AWS' to see your active AWS :cloud: instances :innocent: ");
         return;
     }
     else
@@ -96,7 +96,7 @@ var dummy = function(bot,message) {
 
     var dumb = function (err, convo) {
         convo.ask('Dummy function called', function (response, convo) {
-            if(message.text.toLowerCase() == "quit" || message.text.toLowerCase() == "exit"){
+            if(response.text.toLowerCase() == "quit" || response.text.toLowerCase() == "exit"){
                 bot.reply(message, "Thank you for using Slack Monkey :+1:  Peace :v:");
                 convo.next();
                 return;
@@ -118,7 +118,7 @@ var aws = function(bot,message) {
 
     var dumb = function (err, convo) {
         convo.ask('aws function called', function (response, convo) {
-            if(message.text.toLowerCase() == "quit" || message.text.toLowerCase() == "exit"){
+            if(response.text.toLowerCase() == "quit" || response.text.toLowerCase() == "exit"){
                 bot.reply(message, "Thank you for using Slack Monkey :+1:  Peace :v:");
                 convo.next();
                 return;
@@ -130,10 +130,44 @@ var aws = function(bot,message) {
         });
     };
 
+    var startAWSMonitor = function (err, convo) {
+        convo.ask('reply yes or no', function (response, convo) {
+            if(response.text.toLowerCase() == "yes"){
+                bot.reply(message, "Starting AWS:partly_sunny_rain: monitoring :+1:");
+                monitorAWS = true;
+                // TODO: Add function which starts aws monitoring.
+                convo.next();
+                return;
+            }
+            convo.next();
+
+        });
+    };
+
+    var stopAWSMonitor = function (err, convo) {
+        convo.ask('reply yes or no', function (response, convo) {
+            if(response.text.toLowerCase() == "yes"){
+                bot.reply(message, "AWS:partly_sunny_rain: monitoring stopped :+1: ");
+                monitorAWS = false;
+                // TODO: Add function which stops aws monitoring.
+                convo.next();
+                return;
+            }
+            convo.next();
+
+        });
+    };
+
     // start a conversation with the user.
     //bot.startConversation(message, dumb);
-    bot.reply(message, "Let me manage your DevOps pipeline.");
+    bot.reply(message, "Let me manage your DevOps pipeline :cloud: ");
 
-
-
+    if(monitorAWS){
+        bot.reply(message, "Do you want to stop monitoring your EC2 instances? :sweat_smile:");
+        bot.startConversation(message, stopAWSMonitor);
+    }
+    else{
+        bot.reply(message, "Do you want to start monitoring your EC2 instances? :innocent:");
+        bot.startConversation(message, startAWSMonitor);
+    }
 };
