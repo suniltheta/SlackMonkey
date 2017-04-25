@@ -6,7 +6,7 @@ var moment = require('moment');
 var _ = require('underscore');
 var fs = require('fs');
 var Botkit = require('botkit');
-var monitorAWS = false;
+var monitorAWSFlag = false;
 
 // Amazon related imports
 var AWS = require('aws-sdk');
@@ -56,7 +56,8 @@ var controller = Botkit.slackbot({
 
 // connect the bot to a stream of messages
 controller.spawn({
-    token: process.env.ALTCODETOKEN
+
+    token: process.env.ALTCODETOKEN,
     //slack bot token here
 }).startRTM()
 
@@ -114,7 +115,7 @@ var dummy = function(bot,message) {
 };
 
 //aws function
-var aws = function(bot,message) {
+var aws = function(bot, message) {
 
     var dumb = function (err, convo) {
         convo.ask('aws function called', function (response, convo) {
@@ -133,11 +134,19 @@ var aws = function(bot,message) {
     var startAWSMonitor = function (err, convo) {
         convo.ask('reply yes or no', function (response, convo) {
             if(response.text.toLowerCase() == "yes"){
-                bot.reply(message, "Starting AWS:partly_sunny_rain: monitoring :+1:");
-                monitorAWS = true;
-                // TODO: Add function which starts aws monitoring.
-                convo.next();
-                return;
+                convo.ask('enter number of seconds, default is 10sec', function (response, convo) {
+                    var noOfSeconds = 10000;
+                    if(response.text.isNumber()){
+                        noOfSeconds = Number(response.text) * 1000;
+                    }
+                    bot.reply(message, "Starting AWS:partly_sunny_rain: monitoring :+1:");
+                    monitorAWSFlag = true;
+                    monitorAWS(bot, message, noOfSeconds);
+                    // TODO: Add function which starts aws monitoring.
+                    convo.next();
+                    return;
+                });
+
             }
             convo.next();
 
@@ -148,7 +157,7 @@ var aws = function(bot,message) {
         convo.ask('reply yes or no', function (response, convo) {
             if(response.text.toLowerCase() == "yes"){
                 bot.reply(message, "AWS:partly_sunny_rain: monitoring stopped :+1: ");
-                monitorAWS = false;
+                monitorAWSFlag = false;
                 // TODO: Add function which stops aws monitoring.
                 convo.next();
                 return;
@@ -162,7 +171,7 @@ var aws = function(bot,message) {
     //bot.startConversation(message, dumb);
     bot.reply(message, "Let me manage your DevOps pipeline :cloud: ");
 
-    if(monitorAWS){
+    if(monitorAWSFlag){
         bot.reply(message, "Do you want to stop monitoring your EC2 instances? :sweat_smile:");
         bot.startConversation(message, stopAWSMonitor);
     }
@@ -171,3 +180,26 @@ var aws = function(bot,message) {
         bot.startConversation(message, startAWSMonitor);
     }
 };
+
+var monitorAWS = function (bot, message, noOfSeconds) {
+    EC2.describeInstances(function(err, data){
+        console.log("\nIn describe instances:\n");
+        if (err){
+            console.log(err, err.stack);
+        }
+        else{
+            var instance = data.Reservations[0].Instances[0];
+            var ipAddress = {};
+            console.log("All IP address of AWS instances: ");
+            for(var i = 0; i < data.Reservations[0].Instances.length; i++){
+                ipAddress[i] = data.Reservations[0].Instances[i].PublicIpAddress;
+                console.log(data.Reservations[0].Instances[i].PublicIpAddress);
+            }
+        }
+        if(monitorAWSFlag){
+            console.log("timeout set for: " + noOfSeconds + " seconds");
+            setTimeout(monitorAWS, noOfSeconds);
+        }
+    });
+};
+
